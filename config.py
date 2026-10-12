@@ -8,7 +8,8 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'autovault-dev-secret-key-3rd-sem-cybersec-2026'
     
     # Check if running in serverless environment (e.g. Vercel)
-    IS_VERCEL = bool(os.environ.get('VERCEL'))
+    IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+
     
     db_url = os.environ.get('DATABASE_URL')
     if db_url and db_url.startswith('postgres://'):

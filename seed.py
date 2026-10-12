@@ -14,21 +14,21 @@ from app.models.fuel import FuelEntry
 from app.models.maintenance import MaintenanceRecord
 from app.models.reminder import Reminder
 
-def seed_demo_data():
-    app = create_app()
-    with app.app_context():
-        # Check if demo user already exists
-        demo_user = User.query.filter_by(username='demo_driver').first()
-        if not demo_user:
-            demo_user = User(
-                name='Arjun Verma',
-                email='arjun.demo@autovault.in',
-                username='demo_driver'
-            )
-            demo_user.set_password('AutoVault@2026')
-            db.session.add(demo_user)
-            db.session.commit()
-            print(f"Created demo account: demo_driver / AutoVault@2026")
+def seed_demo_data_in_context():
+    """Seed demo data within an already active Flask app context."""
+    # Check if demo user already exists
+    demo_user = User.query.filter_by(username='demo_driver').first()
+    if not demo_user:
+        demo_user = User(
+            name='Arjun Verma',
+            email='arjun.demo@autovault.in',
+            username='demo_driver'
+        )
+        demo_user.set_password('AutoVault@2026')
+        db.session.add(demo_user)
+        db.session.commit()
+        print("Created demo account: demo_driver / AutoVault@2026")
+
 
         # Check if vehicle exists
         vehicle = Vehicle.query.filter_by(user_id=demo_user.id, model='i20').first()
@@ -157,10 +157,17 @@ def seed_demo_data():
             db.session.commit()
             print("Populated predictive reminders.")
 
-        print("=== Demo Data Seeding Completed Successfully! ===")
-        print("You can log in with:")
-        print("Username: demo_driver")
-        print("Password: AutoVault@2026")
+    print("=== Demo Data Seeding Completed Successfully! ===")
+    print("You can log in with:")
+    print("Username: demo_driver")
+    print("Password: AutoVault@2026")
+
+def seed_demo_data():
+    """Create app instance and populate demo data."""
+    app = create_app()
+    with app.app_context():
+        seed_demo_data_in_context()
 
 if __name__ == '__main__':
     seed_demo_data()
+

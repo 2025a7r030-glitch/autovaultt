@@ -53,7 +53,7 @@ def create_app(config_class=Config):
     app.register_blueprint(analytics_bp)
     app.register_blueprint(modules_bp)
 
-    # Initialize database tables
+    # Initialize database tables and auto-seed demo data if empty
     with app.app_context():
         from app.models.user import User
         from app.models.vehicle import Vehicle
@@ -63,4 +63,12 @@ def create_app(config_class=Config):
         from app.models.document import Document
         db.create_all()
 
+        try:
+            if not app.config.get('TESTING') and User.query.first() is None:
+                from seed import seed_demo_data_in_context
+                seed_demo_data_in_context()
+        except Exception:
+            pass
+
     return app
+
