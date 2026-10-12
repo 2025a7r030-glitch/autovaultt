@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AutoVault — Automotive Management & Security Platform{% endblock %}</title>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="theme-dark">
+    {% if current_user %}
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('dashboard.index') }}" class="brand-logo">
+                    <div class="brand-icon-shield">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <div class="brand-text-group">
+                        <span class="brand-name">AutoVault</span>
+                        <span class="brand-badge-version">SYSTEM v1.0</span>
+                    </div>
+                </a>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li class="menu-category">Command & Telemetry</li>
+                <li class="menu-item">
+                    <a href="{{ url_for('dashboard.index') }}" class="menu-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('vehicle.index') }}" class="menu-link {% if request.endpoint and 'vehicle' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="car"></i>
+                        <span>My Vehicle</span>
+                    </a>
+                </li>
+
+                <li class="menu-category">Logs & Maintenance</li>
+                <li class="menu-item">
+                    <a href="{{ url_for('fuel.index') }}" class="menu-link {% if request.endpoint and 'fuel' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="fuel"></i>
+                        <span>Fuel & Mileage</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('maintenance.index') }}" class="menu-link {% if request.endpoint and 'maintenance' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="wrench"></i>
+                        <span>Maintenance</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('reminders.index') }}" class="menu-link {% if request.endpoint and 'reminders' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="bell"></i>
+                        <span>Reminders</span>
+                    </a>
+                </li>
+
+                <li class="menu-category">Vault & Intelligence</li>
+                <li class="menu-item">
+                    <a href="{{ url_for('documents.index') }}" class="menu-link {% if request.endpoint and 'documents' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="file-lock"></i>
+                        <span>Document Vault</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('analytics.index') }}" class="menu-link {% if request.endpoint and 'analytics' in request.endpoint %}active{% endif %}">
+                        <i data-lucide="bar-chart-3"></i>
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('modules.profile') }}" class="menu-link {% if request.endpoint == 'modules.profile' %}active{% endif %}">
+                        <i data-lucide="user-cog"></i>
+                        <span>Profile & Security</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-quick-profile">
+                    <div class="user-avatar-badge">
+                        <div class="avatar-circle">
+                            {{ current_user.name[:1].upper() }}
+                        </div>
+                        <div class="user-names">
+                            <div class="user-display-name">{{ current_user.name.split()[0] }}</div>
+                            <div class="user-sub-label">@{{ current_user.username }}</div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('auth.logout') }}" class="logout-icon-btn" title="Secure Logout">
+                        <i data-lucide="log-out"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle Navigation">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="topbar-title-wrapper">
+                        <h2 class="page-headline">{% block header_title %}AutoVault Cockpit{% endblock %}</h2>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="security-badge" title="Cryptographically verified session">
+                        <span class="security-dot-pulse"></span>
+                        <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                        <span>SECURE LINK ENCRYPTED</span>
+                    </div>
+                    <a href="{{ url_for('modules.profile') }}" class="btn btn-secondary btn-sm user-topbar-pill">
+                        <i data-lucide="user" style="width: 14px; height: 14px;"></i>
+                        <span>{{ current_user.name }}</span>
+                    </a>
+                </div>
+            </header>
+
+            <main class="content-body">
+                <!-- Flash messages for user feedback -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages-container">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    <div class="alert-content">
+                                        <i data-lucide="{% if category == 'success' %}check-circle-2{% elif category == 'danger' %}alert-octagon{% elif category == 'warning' %}alert-triangle{% else %}info{% endif %}" class="alert-icon"></i>
+                                        <span>{{ message }}</span>
+                                    </div>
+                                    <button class="alert-close" aria-label="Close notification">&times;</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="app-footer">
+                <div class="footer-inner">
+                    <div class="footer-left">
+                        <span class="footer-brand">AutoVault</span>
+                        <span class="footer-sep">&bull;</span>
+                        <span>Automotive Telemetry &amp; Cyber Security Platform</span>
+                    </div>
+                    <div class="footer-right">
+                        <span>B.Tech CSE Capstone System &copy; 2026</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    {% else %}
+        <!-- Unauthenticated View Container -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="unauth-toast-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <div class="alert-content">
+                                <i data-lucide="{% if category == 'success' %}check-circle-2{% elif category == 'danger' %}alert-octagon{% elif category == 'warning' %}alert-triangle{% else %}info{% endif %}" class="alert-icon"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button class="alert-close">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block guest_content %}{% endblock %}
+    {% endif %}
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

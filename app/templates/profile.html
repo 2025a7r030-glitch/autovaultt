@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile & Security — AutoVault{% endblock %}
+{% block header_title %}Account & Security Settings{% endblock %}
+
+{% block content %}
+<div class="profile-page" style="max-width: 900px; margin: 0 auto;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Profile &amp; Security Credentials</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Manage personal account identity, operational credentials, and cryptographic keys.</p>
+    </div>
+
+    <!-- Account Details Form -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i data-lucide="user" style="color: var(--primary);"></i> Personal Details
+            </h3>
+            <span class="badge-vault-gray">Vault Account</span>
+        </div>
+        <form method="POST" action="{{ url_for('modules.profile') }}">
+            <input type="hidden" name="action" value="update_info">
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" value="{{ user.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="username">Username (Locked)</label>
+                    <input type="text" id="username" class="form-control" value="{{ user.username }}" disabled>
+                    <span class="form-text">Usernames cannot be modified after registration.</span>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address (Locked)</label>
+                    <input type="email" id="email" class="form-control" value="{{ user.email }}" disabled>
+                    <span class="form-text">Primary identifier for security and system notifications.</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Member Since</label>
+                    <input type="text" class="form-control" value="{{ user.created_at.strftime('%d %B %Y') }}" disabled>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="save"></i> Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Change Password Form -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i data-lucide="key" style="color: var(--warning);"></i> Security &amp; Password
+            </h3>
+            <span class="badge-vault-amber">Credential Update</span>
+        </div>
+        <form method="POST" action="{{ url_for('modules.profile') }}">
+            <input type="hidden" name="action" value="change_password">
+            <div class="form-group">
+                <label class="form-label" for="old_password">Current Password</label>
+                <input type="password" id="old_password" name="old_password" class="form-control" 
+                       placeholder="••••••••" required>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" class="form-control" 
+                       placeholder="Min. 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                       placeholder="Repeat new password" required>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-secondary">
+                    <i data-lucide="shield-check"></i> Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

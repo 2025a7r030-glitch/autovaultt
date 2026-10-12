@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — AutoVault Cockpit{% endblock %}
+{% block header_title %}Command Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <!-- Top Hero / Welcome Banner -->
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Welcome back, {{ user.name }}</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Live operational status and telemetry for your vehicle vault.</p>
+    </div>
+
+    {% if primary_vehicle %}
+        <!-- Active Vehicle Cockpit Banner -->
+        <div class="vehicle-showcase-card">
+            <div>
+                <span class="badge-tag badge-tag-accent" style="margin-bottom: 0.75rem;">
+                    <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i> PRIMARY TELEMETRY LINK
+                </span>
+                <h2 class="vehicle-showcase-title">{{ primary_vehicle.manufacturer }} {{ primary_vehicle.model }}</h2>
+                <div class="vehicle-showcase-tags">
+                    <span class="badge-tag">{{ primary_vehicle.variant or 'Standard Spec' }}</span>
+                    <span class="badge-tag"><i data-lucide="fuel" style="width: 12px; height: 12px;"></i> {{ primary_vehicle.fuel_type }}</span>
+                    <span class="badge-tag"><i data-lucide="cpu" style="width: 12px; height: 12px;"></i> {{ primary_vehicle.transmission }}</span>
+                    {% if primary_vehicle.registration_number %}
+                        <span class="badge-tag badge-vault-blue" style="letter-spacing: 0.06em; font-weight: 700;">{{ primary_vehicle.registration_number }}</span>
+                    {% endif %}
+                </div>
+                <div class="vehicle-odo-large">
+                    Current Odometer: <strong>{{ "{:,}".format(primary_vehicle.current_odometer) }} km</strong>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('vehicle.index', selected=primary_vehicle.id) }}" class="btn btn-secondary">
+                    <i data-lucide="sliders" style="width: 16px; height: 16px;"></i> Vehicle Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Metric Grid Cards -->
+        <div class="metric-grid">
+            <!-- Vehicle Card -->
+            <div class="metric-card">
+                <div class="metric-info">
+                    <span class="metric-label">Registered Vehicle</span>
+                    <span class="metric-value" style="font-size: 1.4rem;">{{ primary_vehicle.model }}</span>
+                    <span class="metric-desc">{{ primary_vehicle.manufacturer }} &bull; {{ primary_vehicle.fuel_type }}</span>
+                </div>
+                <div class="metric-icon-box icon-blue">
+                    <i data-lucide="car"></i>
+                </div>
+            </div>
+
+            <!-- Fuel Card -->
+            <div class="metric-card">
+                <div class="metric-info">
+                    <span class="metric-label">Estimated Mileage</span>
+                    <span class="metric-value">
+                        {% if fuel_stats.avg_mileage %}
+                            {{ fuel_stats.avg_mileage }} <small style="font-size: 0.85rem; font-weight: 600; color: var(--gold-champagne);">km/L</small>
+                        {% else %}
+                            -- <small style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">km/L</small>
+                        {% endif %}
+                    </span>
+                    <span class="metric-desc">
+                        {% if fuel_stats.monthly_cost > 0 %}
+                            This Month: ₹{{ "{:,.0f}".format(fuel_stats.monthly_cost) }}
+                        {% else %}
+                            Total: ₹{{ "{:,.0f}".format(fuel_stats.total_cost) }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="metric-icon-box icon-cyan">
+                    <i data-lucide="fuel"></i>
+                </div>
+            </div>
+
+            <!-- Maintenance Card -->
+            <div class="metric-card">
+                <div class="metric-info">
+                    <span class="metric-label">Last Service</span>
+                    <span class="metric-value" style="font-size: 1.25rem;">
+                        {% if maint_stats.last_service %}
+                            {{ maint_stats.last_service.service_type }}
+                        {% else %}
+                            None Logged
+                        {% endif %}
+                    </span>
+                    <span class="metric-desc">
+                        {% if maint_stats.last_service %}
+                            {{ maint_stats.last_service.date }} &bull; ₹{{ "{:,.0f}".format(maint_stats.last_service.cost) }}
+                        {% else %}
+                            Service ledger clean
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="metric-icon-box icon-emerald">
+                    <i data-lucide="wrench"></i>
+                </div>
+            </div>
+
+            <!-- Reminders Card -->
+            <div class="metric-card">
+                <div class="metric-info">
+                    <span class="metric-label">Reminders</span>
+                    <span class="metric-value">
+                        {{ reminder_stats.pending_count }}
+                        {% if reminder_stats.overdue_count > 0 %}
+                            <span class="badge-vault-amber" style="font-size: 0.7rem; vertical-align: middle; margin-left: 0.35rem;">{{ reminder_stats.overdue_count }} Overdue</span>
+                        {% endif %}
+                    </span>
+                    <span class="metric-desc">
+                        {% if reminder_stats.pending_count == 0 %}
+                            All caught up
+                        {% else %}
+                            Requires attention
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="metric-icon-box icon-amber">
+                    <i data-lucide="bell"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Row -->
+        <div style="margin-bottom: 2.25rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.85rem; color: #ffffff; letter-spacing: -0.01em;">Quick Actions</h3>
+            <div class="quick-action-grid">
+                <a href="{{ url_for('fuel.index', selected=primary_vehicle.id) }}" class="action-btn-card">
+                    <i data-lucide="plus-circle"></i>
+                    <span>Log Fuel Fill-Up</span>
+                </a>
+                <a href="{{ url_for('maintenance.index', selected=primary_vehicle.id) }}" class="action-btn-card">
+                    <i data-lucide="wrench"></i>
+                    <span>Add Service Record</span>
+                </a>
+                <a href="{{ url_for('reminders.index', selected=primary_vehicle.id) }}" class="action-btn-card">
+                    <i data-lucide="bell-plus"></i>
+                    <span>Set Reminder</span>
+                </a>
+                <a href="{{ url_for('documents.index', selected=primary_vehicle.id) }}" class="action-btn-card">
+                    <i data-lucide="file-up"></i>
+                    <span>Upload Document</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Activity Feed -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title"><i data-lucide="clock-rewind" style="width: 18px; height: 18px; color: var(--primary);"></i> Recent Activity</h3>
+                    <p class="card-subtitle">Chronological ledger of vehicle events and telemetry</p>
+                </div>
+                <span class="badge-vault-gray">Live Audit Trail</span>
+            </div>
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Category</th>
+                            <th>Event Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if recent_activities %}
+                            {% for act in recent_activities %}
+                                <tr>
+                                    <td style="color: var(--text-muted); font-size: 0.825rem; font-feature-settings: 'tnum';">{{ act.timestamp }}</td>
+                                    <td><span class="{{ act.category_badge }}">{{ act.category }}</span></td>
+                                    <td>{{ act.description }}</td>
+                                    <td><span class="{{ act.status_badge }}">{{ act.status }}</span></td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    No activity records logged yet. Add fuel entries or service records to populate your ledger.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Empty State When No Vehicle Has Been Added -->
+        <div class="empty-state-box">
+            <div class="empty-state-icon">
+                <i data-lucide="car" style="width: 32px; height: 32px;"></i>
+            </div>
+            <h2 class="empty-state-title">Your garage is empty</h2>
+            <p class="empty-state-desc">
+                AutoVault requires at least one registered vehicle to monitor odometer readings, fuel consumption, and periodic maintenance intervals.
+            </p>
+            <button type="button" onclick="openModal('addVehicleModal')" class="btn btn-primary" style="padding: 0.8rem 1.65rem;">
+                <i data-lucide="plus"></i> Add Your First Vehicle
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Add Vehicle -->
+<div id="addVehicleModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i data-lucide="car" style="color: var(--primary);"></i> Add Vehicle to Vault
+            </h3>
+            <button class="modal-close-btn" onclick="closeModal('addVehicleModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('vehicle.add') }}">
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="manufacturer">Manufacturer *</label>
+                    <input type="text" id="manufacturer" name="manufacturer" class="form-control" 
+                           placeholder="e.g. Hyundai, Honda, BMW, Tata" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="model">Model *</label>
+                    <input type="text" id="model" name="model" class="form-control" 
+                           placeholder="e.g. i20, Civic, 330i, Nexon" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="variant">Variant</label>
+                    <input type="text" id="variant" name="variant" class="form-control" 
+                           placeholder="e.g. Sportz 1.2, M-Sport, Creative">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="registration_number">Registration Number</label>
+                    <input type="text" id="registration_number" name="registration_number" class="form-control" 
+                           placeholder="e.g. DL 01 AB 1234">
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label class="form-label" for="fuel_type">Fuel Type</label>
+                    <select id="fuel_type" name="fuel_type" class="form-control">
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="CNG">CNG</option>
+                        <option value="Electric">Electric</option>
+                        <option value="Hybrid">Hybrid</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="transmission">Transmission</label>
+                    <select id="transmission" name="transmission" class="form-control">
+                        <option value="Manual">Manual</option>
+                        <option value="Automatic">Automatic</option>
+                        <option value="iMT">iMT</option>
+                        <option value="CVT">CVT</option>
+                        <option value="DCT">DCT / DSG</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="current_odometer">Current Odometer (km)</label>
+                    <input type="number" id="current_odometer" name="current_odometer" class="form-control" 
+                           placeholder="e.g. 15400" min="0" value="0">
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="manufacturing_year">Manufacturing Year</label>
+                    <input type="number" id="manufacturing_year" name="manufacturing_year" class="form-control" 
+                           placeholder="e.g. 2024" min="1950" max="2030">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="color">Color</label>
+                    <input type="text" id="color" name="color" class="form-control" 
+                           placeholder="e.g. Carbon Black, Mineral Gray">
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="insurance_expiry">Insurance Expiry Date</label>
+                    <input type="date" id="insurance_expiry" name="insurance_expiry" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="pollution_expiry">Pollution (PUCC) Expiry</label>
+                    <input type="date" id="pollution_expiry" name="pollution_expiry" class="form-control">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.85rem; margin-top: 1.75rem;">
+                <button type="button" onclick="closeModal('addVehicleModal')" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="check"></i> Save Vehicle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — AutoVault Security{% endblock %}
+
+{% block guest_content %}
+<div class="auth-page-container">
+    <div class="auth-card" style="max-width: 520px;">
+        <div class="auth-header">
+            <a href="{{ url_for('dashboard.landing') }}" class="auth-brand">
+                <div class="brand-icon-shield">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <div class="brand-text-group" style="text-align: left;">
+                    <span class="brand-name">AutoVault</span>
+                    <span class="brand-badge-version">SYSTEM v1.0</span>
+                </div>
+            </a>
+            <h2 class="auth-title">Create Your Vault</h2>
+            <p class="auth-desc">Register a secure identity to manage vehicle telemetry and records</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            <div class="form-group">
+                <label for="name" class="form-label">Full Name</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       placeholder="e.g. Shubham Sharma" value="{{ name or '' }}" required autofocus>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" 
+                           placeholder="e.g. shubham01" value="{{ username or '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" 
+                           placeholder="name@example.com" value="{{ email or '' }}" required>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" 
+                           placeholder="Min. 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" 
+                           placeholder="Repeat password" required>
+                </div>
+            </div>
+
+            <div class="info-callout">
+                <p>
+                    <i data-lucide="lock" style="width: 15px; height: 15px; color: var(--primary);"></i>
+                    <span>Passwords are salted &amp; cryptographically hashed (PBKDF2/scrypt) prior to persistence.</span>
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.85rem;">
+                <i data-lucide="shield-plus" style="width: 18px; height: 18px;"></i> Create Secure Vault
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign In</a></p>
+            <p style="margin-top: 0.65rem;"><a href="{{ url_for('dashboard.landing') }}" style="color: var(--text-muted); font-size: 0.8rem;">&larr; Back to Home</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — AutoVault Cockpit{% endblock %}
+
+{% block guest_content %}
+<div class="auth-page-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <a href="{{ url_for('dashboard.landing') }}" class="auth-brand">
+                <div class="brand-icon-shield">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <div class="brand-text-group" style="text-align: left;">
+                    <span class="brand-name">AutoVault</span>
+                    <span class="brand-badge-version">SYSTEM v1.0</span>
+                </div>
+            </a>
+            <h2 class="auth-title">Welcome Back</h2>
+            <p class="auth-desc">Authenticate to access your secure vehicle dashboard</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+            <div class="form-group">
+                <label for="identifier" class="form-label">Username or Email</label>
+                <input type="text" id="identifier" name="identifier" class="form-control" 
+                       placeholder="e.g. shubham or user@example.com" value="{{ identifier or '' }}" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control" 
+                       placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.85rem; margin-top: 1.75rem;">
+                <i data-lucide="log-in" style="width: 18px; height: 18px;"></i> Sign In to Cockpit
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Don't have an account yet? <a href="{{ url_for('auth.register') }}">Create an Account</a></p>
+            <p style="margin-top: 0.65rem;"><a href="{{ url_for('dashboard.landing') }}" style="color: var(--text-muted); font-size: 0.8rem;">&larr; Back to Home</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

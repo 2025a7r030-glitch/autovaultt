@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Expense &amp; Telemetry Analytics — AutoVault{% endblock %}
+{% block header_title %}Expense &amp; Telemetry Analytics{% endblock %}
+
+{% block content %}
+<div class="analytics-page">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Telemetry &amp; Cost Intelligence</h1>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">Dynamic multi-dimensional analytics for running costs, maintenance overhead, and fuel efficiency.</p>
+        </div>
+        {% if selected_vehicle %}
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{{ url_for('fuel.index', selected=selected_vehicle.id) }}" class="btn btn-secondary btn-sm">
+                    <i data-lucide="plus"></i> Add Fuel
+                </a>
+                <a href="{{ url_for('maintenance.index', selected=selected_vehicle.id) }}" class="btn btn-secondary btn-sm">
+                    <i data-lucide="wrench"></i> Add Service
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if vehicles %}
+        <!-- Vehicle Selector Tabs if multiple -->
+        {% if vehicles|length > 1 %}
+            <div style="display: flex; gap: 0.75rem; overflow-x: auto; margin-bottom: 1.75rem; padding-bottom: 0.5rem;">
+                {% for v in vehicles %}
+                    <a href="{{ url_for('analytics.index', selected=v.id) }}" 
+                       class="btn {% if selected_vehicle and selected_vehicle.id == v.id %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+                        <i data-lucide="car"></i> {{ v.display_name }} ({{ v.registration_number or 'No Reg' }})
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if selected_vehicle %}
+            <!-- Top Metric Cards -->
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Total Cost of Ownership</span>
+                        <span class="metric-value">₹{{ "{:,.2f}".format(total_expense) }}</span>
+                        <span class="metric-desc">Fuel + Maintenance combined</span>
+                    </div>
+                    <div class="metric-icon-box icon-blue">
+                        <i data-lucide="indian-rupee"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Fuel Expenses</span>
+                        <span class="metric-value">₹{{ "{:,.2f}".format(total_fuel) }}</span>
+                        <span class="metric-desc">
+                            {% if total_expense > 0 %}
+                                {{ "{:.1f}".format((total_fuel / total_expense) * 100) }}% of total spend
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="metric-icon-box icon-cyan">
+                        <i data-lucide="fuel"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Maintenance Spend</span>
+                        <span class="metric-value">₹{{ "{:,.2f}".format(total_maint) }}</span>
+                        <span class="metric-desc">
+                            {% if total_expense > 0 %}
+                                {{ "{:.1f}".format((total_maint / total_expense) * 100) }}% of total spend
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="metric-icon-box icon-emerald">
+                        <i data-lucide="wrench"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Cost per Odometer KM</span>
+                        <span class="metric-value" style="font-size: 1.4rem;">
+                            {% if selected_vehicle.current_odometer > 0 and total_expense > 0 %}
+                                ₹{{ "{:.2f}".format(total_expense / selected_vehicle.current_odometer) }} <small style="font-size: 0.8rem; color: #94a3b8;">/km</small>
+                            {% else %}
+                                --
+                            {% endif %}
+                        </span>
+                        <span class="metric-desc">Running rate per km</span>
+                    </div>
+                    <div class="metric-icon-box icon-purple">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                </div>
+            </div>
+
+            {% if has_data %}
+                <!-- Charts Grid -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                    <!-- Monthly Spending Comparison -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title"><i data-lucide="bar-chart-2" style="color: var(--primary);"></i> Monthly Spend Progression</h3>
+                                <p class="card-subtitle">Fuel vs Maintenance costs over months</p>
+                            </div>
+                            <span class="badge-vault-blue">Monthly Aggregation</span>
+                        </div>
+                        <div style="height: 280px; position: relative;">
+                            <canvas id="monthlySpendingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Expense Ratio Breakdown -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title"><i data-lucide="pie-chart" style="color: var(--accent-cyan);"></i> Cost Distribution</h3>
+                                <p class="card-subtitle">Operational ratio breakdown</p>
+                            </div>
+                        </div>
+                        <div style="height: 280px; position: relative; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="expenseRatioChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <!-- Mileage Trend -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title"><i data-lucide="activity" style="color: #38bdf8;"></i> Mileage Telemetry Trend (km/L)</h3>
+                                <p class="card-subtitle">Efficiency measurements calculated across refuels</p>
+                            </div>
+                        </div>
+                        <div style="height: 260px; position: relative;">
+                            <canvas id="mileageTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance Category Breakdown -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title"><i data-lucide="wrench" style="color: #10b981;"></i> Maintenance by Category</h3>
+                                <p class="card-subtitle">Servicing cost distribution across categories</p>
+                            </div>
+                        </div>
+                        <div style="height: 260px; position: relative;">
+                            <canvas id="maintCategoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="card" style="text-align: center; padding: 4rem 2rem;">
+                    <i data-lucide="line-chart" style="width: 56px; height: 56px; color: var(--text-muted); opacity: 0.4; margin-bottom: 1.25rem;"></i>
+                    <h3 style="font-size: 1.45rem; font-weight: 700; color: #ffffff; margin-bottom: 0.65rem;">Not enough data yet. Add more records to see analytics.</h3>
+                    <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 1.75rem; font-size: 0.95rem;">
+                        Charts will generate dynamically once you record at least one fuel refill or maintenance service for {{ selected_vehicle.display_name }}.
+                    </p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <a href="{{ url_for('fuel.index', selected=selected_vehicle.id) }}" class="btn btn-primary">
+                            <i data-lucide="fuel"></i> Log Refill
+                        </a>
+                        <a href="{{ url_for('maintenance.index', selected=selected_vehicle.id) }}" class="btn btn-secondary">
+                            <i data-lucide="wrench"></i> Log Maintenance
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state-box">
+            <div class="empty-state-icon">
+                <i data-lucide="car" style="width: 32px; height: 32px;"></i>
+            </div>
+            <h2 class="empty-state-title">No Vehicles Registered</h2>
+            <p class="empty-state-desc">You need to register a vehicle to generate expense and fuel analytics.</p>
+            <a href="{{ url_for('vehicle.index') }}" class="btn btn-primary">
+                <i data-lucide="plus"></i> Add Vehicle
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% if has_data %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const payload = {{ analytics_json|safe }};
+
+        // 1. Monthly Spending Chart
+        const monthlyCtx = document.getElementById('monthlySpendingChart');
+        if (monthlyCtx) {
+            new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: payload.months.length ? payload.months : ['Current Period'],
+                    datasets: [
+                        {
+                            label: 'Fuel (₹)',
+                            data: payload.fuel_spending,
+                            backgroundColor: 'rgba(212, 175, 55, 0.85)',
+                            borderColor: '#d4af37',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Maintenance (₹)',
+                            data: payload.maintenance_spending,
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(212, 175, 55, 0.08)' } },
+                        y: { 
+                            grid: { color: 'rgba(212, 175, 55, 0.08)' },
+                            ticks: { callback: v => '₹' + v.toLocaleString() }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Expense Ratio Chart
+        const ratioCtx = document.getElementById('expenseRatioChart');
+        if (ratioCtx) {
+            new Chart(ratioCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fuel', 'Maintenance'],
+                    datasets: [{
+                        data: [payload.expense_breakdown.fuel, payload.expense_breakdown.maintenance],
+                        backgroundColor: ['#d4af37', '#10b981'],
+                        borderColor: '#131419',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // 3. Mileage Trend Chart
+        const mileageCtx = document.getElementById('mileageTrendChart');
+        if (mileageCtx) {
+            new Chart(mileageCtx, {
+                type: 'line',
+                data: {
+                    labels: payload.mileage_dates.length ? payload.mileage_dates : ['No consecutive refuels'],
+                    datasets: [{
+                        label: 'Mileage (km/L)',
+                        data: payload.mileage_values.length ? payload.mileage_values : [0],
+                        borderColor: '#f3d079',
+                        backgroundColor: 'rgba(243, 208, 121, 0.15)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#f3d079',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(212, 175, 55, 0.08)' } },
+                        y: { 
+                            grid: { color: 'rgba(212, 175, 55, 0.08)' },
+                            ticks: { callback: v => v + ' km/L' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Maintenance Category Chart
+        const maintCtx = document.getElementById('maintCategoryChart');
+        if (maintCtx) {
+            new Chart(maintCtx, {
+                type: 'bar',
+                data: {
+                    labels: payload.maintenance_categories.labels.length ? payload.maintenance_categories.labels : ['No Categories'],
+                    datasets: [{
+                        label: 'Cost (₹)',
+                        data: payload.maintenance_categories.values.length ? payload.maintenance_categories.values : [0],
+                        backgroundColor: 'rgba(249, 115, 22, 0.85)',
+                        borderColor: '#f97316',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            grid: { color: 'rgba(212, 175, 55, 0.08)' },
+                            ticks: { callback: v => '₹' + v.toLocaleString() }
+                        },
+                        y: { grid: { color: 'rgba(212, 175, 55, 0.08)' } }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

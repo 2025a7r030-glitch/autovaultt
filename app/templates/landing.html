@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}AutoVault — Automotive Telemetry &amp; Cyber Security Platform{% endblock %}
+
+{% block guest_content %}
+<div class="landing-page">
+    <!-- Top Navigation Header -->
+    <header class="landing-header">
+        <a href="{{ url_for('dashboard.landing') }}" class="brand-logo">
+            <div class="brand-icon-shield">
+                <i data-lucide="shield-check"></i>
+            </div>
+            <div class="brand-text-group">
+                <span class="brand-name">AutoVault</span>
+                <span class="brand-badge-version">SYSTEM v1.0</span>
+            </div>
+        </a>
+        <nav class="landing-nav">
+            <a href="#home">Cockpit</a>
+            <a href="#features">Capabilities</a>
+            <a href="#security">Security Core</a>
+            <a href="#about">Project Specs</a>
+        </nav>
+        <div style="display: flex; gap: 0.85rem; align-items: center;">
+            {% if current_user %}
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-sm">Enter Cockpit</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm">Sign In</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Initialize Vault</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="home">
+        <div class="hero-container">
+            <div class="hero-pill">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                Cyber Security Focused Vehicle Infrastructure
+            </div>
+            <h1 class="hero-title">Your Car. Your Data. One Secure Vault.</h1>
+            <p class="hero-subtitle">
+                Eliminate scattered paper invoices, lost service records, and unprotected spreadsheets. AutoVault centralizes real-time telemetry, fuel monitoring, maintenance logs, and regulatory paperwork behind cryptographic defense-in-depth security.
+            </p>
+            <div class="hero-actions">
+                {% if current_user %}
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+                        <i data-lucide="layout-dashboard"></i> Enter Control Center
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+                        <i data-lucide="shield-plus"></i> Initialize Secure Vault
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-secondary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+                        <i data-lucide="log-in"></i> Sign In to Cockpit
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="landing-section" id="features">
+        <div class="section-head">
+            <h2 class="section-title">Centralized Automotive Intelligence</h2>
+            <p class="section-sub">Engineered to maintain optimal vehicle health, track running expenses, and shield confidential ownership records.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="feature-icon-wrapper icon-blue">
+                    <i data-lucide="car"></i>
+                </div>
+                <h3 class="feature-heading">Vehicle Garage</h3>
+                <p class="feature-body">Comprehensive telemetry tracking manufacturer specifications, powertrain configurations, registration identifiers, and lifetime odometer ledgers.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-icon-wrapper icon-cyan">
+                    <i data-lucide="fuel"></i>
+                </div>
+                <h3 class="feature-heading">Fuel &amp; Efficiency Analytics</h3>
+                <p class="feature-body">Log fuel fill-ups, track expenditure variations, calculate exact distance-per-litre efficiency, and detect consumption spikes over time.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-icon-wrapper icon-emerald">
+                    <i data-lucide="wrench"></i>
+                </div>
+                <h3 class="feature-heading">Service Ledger</h3>
+                <p class="feature-body">Chronological digital service log monitoring periodic servicing, oil flushes, part replacements, and authorized workshop invoices.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-icon-wrapper icon-amber">
+                    <i data-lucide="bell"></i>
+                </div>
+                <h3 class="feature-heading">Precision Reminders</h3>
+                <p class="feature-body">Dual-trigger alerts tracking elapsed calendar intervals or accumulated odometer mileage to avoid missed insurance renewals or critical oil changes.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-icon-wrapper icon-purple">
+                    <i data-lucide="pie-chart"></i>
+                </div>
+                <h3 class="feature-heading">Expense Analytics</h3>
+                <p class="feature-body">Dynamic fiscal breakdowns separating fuel operational expenses from periodic maintenance investments with modern data visualizations.</p>
+            </div>
+            <div class="feature-box">
+                <div class="feature-icon-wrapper icon-blue">
+                    <i data-lucide="lock"></i>
+                </div>
+                <h3 class="feature-heading">Encrypted Document Vault</h3>
+                <p class="feature-body">Secure storage for registration certificates, insurance policy schedules, and pollution compliance cards guarded with strict ownership isolation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="security-section-bg" id="security" style="padding: 6rem 2rem;">
+        <div class="landing-section" style="padding: 0;">
+            <div class="section-head">
+                <div class="hero-pill" style="margin-bottom: 1.25rem;">
+                    <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i> Hardened Security Matrix
+                </div>
+                <h2 class="section-title">Built with Defense-in-Depth</h2>
+                <p class="section-sub">Conceived as a B.Tech Cyber Security capstone, AutoVault implements fundamental enterprise defenses across every layer.</p>
+            </div>
+            <div class="security-cards-grid">
+                <div class="security-card-item">
+                    <h4><i data-lucide="key-round"></i> Cryptographic Hashing</h4>
+                    <p>Plaintext credentials are never committed to storage. Passwords are automatically salted and digested via Werkzeug's PBKDF2/scrypt key derivation.</p>
+                </div>
+                <div class="security-card-item">
+                    <h4><i data-lucide="shield-alert"></i> IDOR Access Controls</h4>
+                    <p>All database lookups strictly enforce user tenancy. Cross-user parameter manipulation on object identifiers yields strict HTTP 403 Forbidden responses.</p>
+                </div>
+                <div class="security-card-item">
+                    <h4><i data-lucide="database"></i> SQLi Immunity via ORM</h4>
+                    <p>Database queries operate via SQLAlchemy ORM with strictly parameterized queries, entirely preventing SQL injection attacks.</p>
+                </div>
+                <div class="security-card-item">
+                    <h4><i data-lucide="user-x"></i> Anti-Enumeration Logic</h4>
+                    <p>Authentication failure handlers return uniform status responses to prevent hostile enumeration of registered usernames or emails.</p>
+                </div>
+                <div class="security-card-item">
+                    <h4><i data-lucide="file-check"></i> Isolated Document Quarantining</h4>
+                    <p>Uploaded documents reside outside the public web root with strict extension whitelisting and authenticated gateway serving.</p>
+                </div>
+                <div class="security-card-item">
+                    <h4><i data-lucide="binary"></i> XSS Output Sanitization</h4>
+                    <p>All user-supplied inputs displayed in the interface are automatically HTML-escaped by Jinja2 to neutralize stored and reflected Cross-Site Scripting.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="landing-section" id="about">
+        <div class="card" style="padding: 3rem 2rem; text-align: center; border-radius: var(--radius-xl);">
+            <h3 style="font-size: 1.65rem; font-weight: 800; color: #ffffff; margin-bottom: 0.85rem; letter-spacing: -0.02em;">Academic Project Information</h3>
+            <p style="color: var(--text-secondary); max-width: 680px; margin: 0 auto 1.75rem; line-height: 1.65;">
+                AutoVault is developed as a 3rd-semester B.Tech Computer Science & Engineering (Cyber Security) capstone project. It exhibits clean software architecture, relational database engineering, and practical application security.
+            </p>
+            <div style="display: inline-flex; gap: 0.85rem; flex-wrap: wrap; justify-content: center;">
+                <span class="badge-vault-blue">Python 3 &bull; Flask 3.x</span>
+                <span class="badge-vault-blue">SQLite + SQLAlchemy ORM</span>
+                <span class="badge-vault-blue">Werkzeug Cryptography</span>
+                <span class="badge-vault-blue">Plus Jakarta Sans UI System</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-inner">
+            <div class="footer-left">
+                <span class="footer-brand">AutoVault</span>
+                <span class="footer-sep">&bull;</span>
+                <span>A Secure and Personalized Vehicle Management System</span>
+            </div>
+            <div class="footer-right">
+                <span>B.Tech CSE Cyber Security Capstone &copy; 2026</span>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}

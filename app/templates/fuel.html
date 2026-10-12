@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Fuel &amp; Mileage Telemetry — AutoVault{% endblock %}
+{% block header_title %}Fuel &amp; Mileage Telemetry{% endblock %}
+
+{% block content %}
+<div class="fuel-page">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 1.85rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Fuel &amp; Efficiency Logs</h1>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">Track fuel fill-ups, distance intervals, and accurate consumption telemetry.</p>
+        </div>
+        {% if selected_vehicle %}
+            <button type="button" onclick="openModal('addFuelModal')" class="btn btn-primary">
+                <i data-lucide="plus-circle"></i> Log Fuel Fill-Up
+            </button>
+        {% endif %}
+    </div>
+
+    {% if vehicles %}
+        <!-- Vehicle Selector Tabs if multiple -->
+        {% if vehicles|length > 1 %}
+            <div style="display: flex; gap: 0.75rem; overflow-x: auto; margin-bottom: 1.75rem; padding-bottom: 0.5rem;">
+                {% for v in vehicles %}
+                    <a href="{{ url_for('fuel.index', selected=v.id) }}" 
+                       class="btn {% if selected_vehicle and selected_vehicle.id == v.id %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+                        <i data-lucide="car"></i> {{ v.display_name }} ({{ v.registration_number or 'No Reg' }})
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if selected_vehicle %}
+            <!-- Metric Cards for Fuel -->
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Average Mileage</span>
+                        <span class="metric-value" style="color: var(--gold-champagne);">
+                            {% if stats.avg_mileage %}
+                                {{ stats.avg_mileage }} <small style="font-size: 0.85rem; color: #94a3b8;">km/L</small>
+                            {% else %}
+                                -- <small style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">km/L</small>
+                            {% endif %}
+                        </span>
+                        <span class="metric-desc">
+                            {% if stats.avg_mileage %}
+                                Based on consecutive refills
+                            {% else %}
+                                Requires &ge;2 fills with odo
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="metric-icon-box icon-cyan">
+                        <i data-lucide="gauge"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Total Fuel Expenditure</span>
+                        <span class="metric-value">₹{{ "{:,.2f}".format(stats.total_cost) }}</span>
+                        <span class="metric-desc">Lifetime fuel costs</span>
+                    </div>
+                    <div class="metric-icon-box icon-blue">
+                        <i data-lucide="indian-rupee"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Total Volume</span>
+                        <span class="metric-value">{{ "{:,.1f}".format(stats.total_litres) }} <small style="font-size: 0.85rem; color: #94a3b8;">L</small></span>
+                        <span class="metric-desc">Litres logged in vault</span>
+                    </div>
+                    <div class="metric-icon-box icon-purple">
+                        <i data-lucide="fuel"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <span class="metric-label">Average Fuel Price</span>
+                        <span class="metric-value">₹{{ "{:,.2f}".format(stats.avg_price) }} <small style="font-size: 0.8rem; color: #94a3b8;">/L</small></span>
+                        <span class="metric-desc">Average cost per litre</span>
+                    </div>
+                    <div class="metric-icon-box icon-amber">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fuel History Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title"><i data-lucide="list" style="color: var(--primary);"></i> Fuel Log History</h3>
+                        <p class="card-subtitle">Audited fuel transactions for {{ selected_vehicle.display_name }}</p>
+                    </div>
+                    <span class="badge-vault-gray">{{ stats.entries_with_mileage|length }} Entries</span>
+                </div>
+
+                {% if stats.entries_with_mileage %}
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Odometer</th>
+                                    <th>Interval Distance</th>
+                                    <th>Volume</th>
+                                    <th>Price / L</th>
+                                    <th>Total Cost</th>
+                                    <th>Efficiency (km/L)</th>
+                                    <th>Station / Notes</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in stats.entries_with_mileage %}
+                                    {% set e = item.entry %}
+                                    <tr>
+                                        <td style="font-weight: 600; color: #ffffff;">{{ e.date }}</td>
+                                        <td style="font-feature-settings: 'tnum';">{{ "{:,}".format(e.odometer) }} km</td>
+                                        <td>
+                                            {% if item.distance %}
+                                                <span class="badge-tag">+{{ "{:,}".format(item.distance) }} km</span>
+                                            {% else %}
+                                                <span style="color: var(--text-muted);">&mdash;</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="font-feature-settings: 'tnum';">{{ e.litres }} L</td>
+                                        <td style="font-feature-settings: 'tnum';">₹{{ "{:,.2f}".format(e.price_per_litre) }}</td>
+                                        <td style="font-weight: 700; color: #ffffff; font-feature-settings: 'tnum';">₹{{ "{:,.2f}".format(e.total_cost) }}</td>
+                                        <td>
+                                            {% if item.mileage %}
+                                                <span class="badge-vault-green" style="font-weight: 700;">{{ item.mileage }} km/L</span>
+                                            {% else %}
+                                                <span style="color: var(--text-muted); font-size: 0.8rem;">Initial Base Fill</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="max-width: 200px; color: var(--text-secondary); font-size: 0.85rem;">
+                                            {% if e.station %}<strong>{{ e.station }}</strong>{% endif %}
+                                            {% if e.notes %}<div style="color: var(--text-muted); font-size: 0.775rem;">{{ e.notes }}</div>{% endif %}
+                                            {% if not e.station and not e.notes %}<span style="color: var(--text-muted);">&mdash;</span>{% endif %}
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <form method="POST" action="{{ url_for('fuel.delete', entry_id=e.id) }}" onsubmit="return confirm('Delete this fuel entry?');" style="display: inline;">
+                                                <button type="submit" class="logout-icon-btn" title="Delete entry">
+                                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted);">
+                        <i data-lucide="fuel" style="width: 48px; height: 48px; opacity: 0.4; margin-bottom: 1rem;"></i>
+                        <h4 style="color: #ffffff; margin-bottom: 0.5rem;">No Fuel Entries Logged Yet</h4>
+                        <p style="font-size: 0.9rem; max-width: 420px; margin: 0 auto 1.5rem;">Log your fuel receipts and odometer readings to calculate exact fuel mileage and running expenses.</p>
+                        <button type="button" onclick="openModal('addFuelModal')" class="btn btn-primary btn-sm">
+                            <i data-lucide="plus"></i> Log First Fill-Up
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state-box">
+            <div class="empty-state-icon">
+                <i data-lucide="car" style="width: 32px; height: 32px;"></i>
+            </div>
+            <h2 class="empty-state-title">No Vehicles Registered</h2>
+            <p class="empty-state-desc">You need to add a vehicle before recording fuel telemetry.</p>
+            <a href="{{ url_for('vehicle.index') }}" class="btn btn-primary">
+                <i data-lucide="plus"></i> Add Vehicle
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% if selected_vehicle %}
+<!-- Modal: Add Fuel Entry -->
+<div id="addFuelModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i data-lucide="fuel" style="color: var(--primary);"></i> Log Fuel Entry — {{ selected_vehicle.display_name }}
+            </h3>
+            <button class="modal-close-btn" onclick="closeModal('addFuelModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('fuel.add') }}">
+            <input type="hidden" name="vehicle_id" value="{{ selected_vehicle.id }}">
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="fuel_date">Date *</label>
+                    <input type="date" id="fuel_date" name="date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fuel_odometer">Odometer Reading (km) *</label>
+                    <input type="number" id="fuel_odometer" name="odometer" class="form-control" 
+                           placeholder="Current: {{ selected_vehicle.current_odometer }}" min="0" value="{{ selected_vehicle.current_odometer }}" required>
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label class="form-label" for="fuel_litres">Fuel Litres *</label>
+                    <input type="number" step="0.01" id="fuel_litres" name="litres" class="form-control" 
+                           placeholder="e.g. 32.5" min="0.1" required oninput="recalcFuelCost()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fuel_price">Price per Litre (₹) *</label>
+                    <input type="number" step="0.01" id="fuel_price" name="price_per_litre" class="form-control" 
+                           placeholder="e.g. 96.50" min="0.1" required oninput="recalcFuelCost()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fuel_total">Total Cost (₹)</label>
+                    <input type="number" step="0.01" id="fuel_total" name="total_cost" class="form-control" 
+                           placeholder="Auto-calculated">
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label" for="fuel_station">Fuel Station / Brand</label>
+                    <input type="text" id="fuel_station" name="station" class="form-control" 
+                           placeholder="e.g. IndianOil, Shell, BPCL Sector 18">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="fuel_notes">Notes / Observations</label>
+                    <input type="text" id="fuel_notes" name="notes" class="form-control" 
+                           placeholder="e.g. Full tank, highway trip fill">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.85rem; margin-top: 1.75rem;">
+                <button type="button" onclick="closeModal('addFuelModal')" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="check"></i> Save Fuel Entry
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const d = document.getElementById('fuel_date');
+        if (d && !d.value) {
+            d.value = new Date().toISOString().split('T')[0];
+        }
+    });
+
+    function recalcFuelCost() {
+        const l = parseFloat(document.getElementById('fuel_litres').value) || 0;
+        const p = parseFloat(document.getElementById('fuel_price').value) || 0;
+        const total = document.getElementById('fuel_total');
+        if (l > 0 && p > 0) {
+            total.value = (l * p).toFixed(2);
+        }
+    }
+</script>
+{% endif %}
+{% endblock %}
