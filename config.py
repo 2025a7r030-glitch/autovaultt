@@ -2,31 +2,44 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-class Config:
-    """Application configuration for AutoVault."""
-    # Secret key for session management and CSRF security
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'autovault-dev-secret-key-3rd-sem-cybersec-2026'
-    
-    # Check if running in serverless environment (e.g. Vercel)
-    IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+def _is_serverless():
+    """Detect if running in Vercel/Lambda or read-only serverless environment."""
+    if any(os.environ.get(k) for k in ('VERCEL', 'VERCEL_ENV', 'VERCEL_REGION', 'AWS_LAMBDA_FUNCTION_NAME', 'LAMBDA_TASK_ROOT')):
+        return True
+    if os.path.exists('/var/task'):
+        return True
+    instance_dir = os.path.join(BASE_DIR, 'instance')
+    try:
+        os.makedirs(instance_dir, exist_ok=True)
+        test_file = os.path.join(instance_dir, '.write_test')
+        with open(test_file, 'w') as f:
+            f.write('1')
+        os.remove(test_file)
+        return False
+    except (OSError, IOError, PermissionError):
+        return True
 
-    
+def _get_database_uri():
     db_url = os.environ.get('DATABASE_URL')
     if db_url and db_url.startswith('postgres://'):
-        db_url = db_url.replace('postgres://', 'postgresql://', 1)
-
+        return db_url.replace('postgres://', 'postgresql://', 1)
     if db_url:
-        SQLALCHEMY_DATABASE_URI = db_url
-    elif IS_VERCEL:
-        SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/autovault.db'
-    else:
-        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'autovault.db')}"
-    
+        return db_url
+    if _is_serverless():
+        return 'sqlite:////tmp/autovault.db'
+    return f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'autovault.db')}"
+
+def _get_upload_folder():
+    if _is_serverless():
+        return '/tmp/uploads'
+    return os.path.join(BASE_DIR, 'instance', 'uploads')
+
+class Config:
+    """Application configuration for AutoVault."""
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'autovault-dev-secret-key-3rd-sem-cybersec-2026'
+    IS_VERCEL = _is_serverless()
+    SQLALCHEMY_DATABASE_URI = _get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-    # Upload configurations (reserved for Document Vault)
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload
-    if IS_VERCEL:
-        UPLOAD_FOLDER = '/tmp/uploads'
-    else:
-        UPLOAD_FOLDER = os.path.join(BASE_DIR, 'instance', 'uploads')
+    UPLOAD_FOLDER = _get_upload_folder()
+

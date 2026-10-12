@@ -55,20 +55,21 @@ def create_app(config_class=Config):
 
     # Initialize database tables and auto-seed demo data if empty
     with app.app_context():
-        from app.models.user import User
-        from app.models.vehicle import Vehicle
-        from app.models.fuel import FuelEntry
-        from app.models.maintenance import MaintenanceRecord
-        from app.models.reminder import Reminder
-        from app.models.document import Document
-        db.create_all()
-
         try:
+            from app.models.user import User
+            from app.models.vehicle import Vehicle
+            from app.models.fuel import FuelEntry
+            from app.models.maintenance import MaintenanceRecord
+            from app.models.reminder import Reminder
+            from app.models.document import Document
+            db.create_all()
+
             if not app.config.get('TESTING') and User.query.first() is None:
                 from seed import seed_demo_data_in_context
                 seed_demo_data_in_context()
-        except Exception:
-            pass
+        except Exception as e:
+            app.logger.warning(f"Database initialization deferred or failed: {e}")
 
     return app
+
 
