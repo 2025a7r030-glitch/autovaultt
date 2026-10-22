@@ -18,10 +18,11 @@ $$\text{Vehicle Profiles} + \text{Fuel Telemetry \& Mileage Math} + \text{Servic
 | Layer | Technology | Rationale |
 | :--- | :--- | :--- |
 | **Backend** | Python 3 + Flask 3.x | Lightweight, modular routing via blueprints, high viva explainability |
-| **Database** | SQLite + SQLAlchemy ORM | Zero-configuration serverless file database with foreign-key relationships and parameterized queries |
-| **Authentication** | Werkzeug Security | Salted key derivation (PBKDF2/scrypt) cryptographic password hashing |
-| **Frontend** | HTML5, CSS3, JavaScript | Executive dark cockpit theme (Obsidian & Electric Blue), Plus Jakarta Sans typography, Lucide Icons |
+| **Database** | SQLite + SQLAlchemy ORM | Zero-configuration serverless file database with foreign-key relationships and parameterized queries (PostgreSQL ready via `DATABASE_URL`) |
+| **Authentication** | Werkzeug Security | Salted key derivation (PBKDF2/scrypt) cryptographic password hashing with resilient serverless session persistence |
+| **Frontend** | HTML5, CSS3, JavaScript | Executive automotive theme (Black & Gold Royale Cockpit: Deep Onyx `#07080A`, Royal Gold `#D4AF37`, Champagne `#F3D079`, Orange warnings, Green optimal, Red critical), Plus Jakarta Sans typography, Lucide Icons |
 | **Analytics** | Chart.js 4.x | Dynamic multi-dimensional charts (monthly spending, cost distribution, mileage trends, category breakdowns) |
+| **Cloud Deployment** | Vercel Serverless / Render | Configured with `vercel.json` and WSGI serverless entrypoint (`api/index.py`) |
 
 ---
 
