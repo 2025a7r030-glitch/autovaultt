@@ -25,8 +25,11 @@
             {% if current_user %}
                 <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-sm">Enter Cockpit</a>
             {% else %}
+                <a href="{{ url_for('auth.demo_login') }}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #f5d77f 0%, #d4af37 100%); color: #07080a; font-weight: 700; border: none; display: flex; align-items: center; gap: 0.35rem;">
+                    <i data-lucide="zap" style="width: 14px; height: 14px; fill: #07080a;"></i> Demo Access
+                </a>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-sm">Sign In</a>
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Initialize Vault</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-secondary btn-sm">Register</a>
             {% endif %}
         </div>
     </header>
@@ -48,11 +51,11 @@
                         <i data-lucide="layout-dashboard"></i> Enter Control Center
                     </a>
                 {% else %}
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">
-                        <i data-lucide="shield-plus"></i> Initialize Secure Vault
+                    <a href="{{ url_for('auth.demo_login') }}" class="btn btn-primary" style="padding: 0.85rem 2.2rem; font-size: 1rem; background: linear-gradient(135deg, #f5d77f 0%, #d4af37 50%, #b8860b 100%); color: #07080a; font-weight: 800; border: none; box-shadow: 0 4px 25px rgba(212, 175, 55, 0.4); display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="zap" style="width: 18px; height: 18px; fill: #07080a;"></i> Instant Demo Cockpit (1-Click)
                     </a>
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-secondary" style="padding: 0.85rem 2rem; font-size: 1rem;">
-                        <i data-lucide="log-in"></i> Sign In to Cockpit
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-secondary" style="padding: 0.85rem 1.75rem; font-size: 1rem;">
+                        <i data-lucide="log-in"></i> Sign In
                     </a>
                 {% endif %}
             </div>

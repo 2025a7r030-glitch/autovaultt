@@ -163,6 +163,39 @@ def login():
 
     return render_template('login.html')
 
+@auth_bp.route('/demo-login', methods=['GET', 'POST'])
+def demo_login():
+    """Direct one-click access into the pre-populated demo driver account."""
+    demo_user = User.query.filter_by(username='demo_driver').first()
+    if not demo_user:
+        try:
+            from seed import seed_demo_data_in_context
+            seed_demo_data_in_context()
+            demo_user = User.query.filter_by(username='demo_driver').first()
+        except Exception:
+            db.session.rollback()
+
+    if not demo_user:
+        demo_user = User(
+            name='Arjun Verma',
+            email='arjun.verma@autovault.in',
+            username='demo_driver'
+        )
+        demo_user.set_password('AutoVault@2026')
+        db.session.add(demo_user)
+        db.session.commit()
+
+    # Authenticate and establish permanent session
+    session.clear()
+    session.permanent = True
+    session['user_id'] = demo_user.id
+    session['username'] = demo_user.username
+    session['email'] = demo_user.email
+    session['name'] = demo_user.name
+
+    flash('Direct Access: Welcome to AutoVault Demo Cockpit!', 'success')
+    return redirect(url_for('dashboard.index'))
+
 @auth_bp.route('/logout')
 def logout():
     """Securely log out by destroying session data."""

@@ -19,6 +19,17 @@
             <p class="auth-desc">Authenticate to access your secure vehicle dashboard</p>
         </div>
 
+        <!-- Instant 1-Click Demo Access Button -->
+        <a href="{{ url_for('auth.demo_login') }}" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #f5d77f 0%, #d4af37 50%, #b8860b 100%); color: #07080a; font-weight: 800; font-size: 0.95rem; padding: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-top: 1.5rem; margin-bottom: 1.5rem; text-decoration: none; border: none; box-shadow: 0 4px 24px rgba(212, 175, 55, 0.35); border-radius: var(--radius-md); transition: transform 0.15s ease;">
+            <i data-lucide="zap" style="width: 20px; height: 20px; fill: #07080a;"></i> Instant Demo Access (No Credentials Needed)
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.5rem;">
+            <div style="flex: 1; height: 1px; background: rgba(212, 175, 55, 0.2);"></div>
+            <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600;">or sign in with password</span>
+            <div style="flex: 1; height: 1px; background: rgba(212, 175, 55, 0.2);"></div>
+        </div>
+
         <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
             <div class="form-group">
                 <label for="identifier" class="form-label">Username or Email</label>
