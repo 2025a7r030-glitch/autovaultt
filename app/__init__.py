@@ -32,6 +32,15 @@ def create_app(config_class=Config):
     def inject_user():
         return dict(current_user=get_current_user())
 
+    # Prevent aggressive browser caching of HTML pages
+    @app.after_request
+    def set_cache_control(response):
+        if response.mimetype == 'text/html':
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
+
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
