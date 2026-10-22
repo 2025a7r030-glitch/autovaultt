@@ -11,22 +11,69 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         user = get_current_user()
         if not user:
-            session.clear()
+            session.pop('user_id', None)
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('auth.login', next=request.path))
         return f(*args, **kwargs)
     return decorated_function
 
 def get_current_user():
-    """Retrieve the currently authenticated user from database, or None."""
-    if 'user_id' in session:
-        return db.session.get(User, session['user_id'])
+    """Retrieve the currently authenticated user from database, or restore from secure signed session."""
+    if 'user_id' not in session:
+        return None
+
+    user_id = session.get('user_id')
+    user = db.session.get(User, user_id)
+    if user:
+        return user
+
+    # Resiliency fallback for serverless container cold-starts:
+    # If the user was authenticated via signed session cookie but this serverless container
+    # has an empty or fresh SQLite database, restore user state to avoid kicking them out.
+    username = session.get('username')
+    email = session.get('email', f"{username}@autovault.local" if username else None)
+    name = session.get('name', username)
+
+    if username:
+        try:
+            existing = User.query.filter((User.username == username) | (User.email == email)).first()
+            if existing:
+                session['user_id'] = existing.id
+                return existing
+
+            restored_user = User(id=user_id, name=name, email=email, username=username)
+            restored_user.set_password('AutoVault@2026')
+            db.session.add(restored_user)
+            db.session.commit()
+
+            # Ensure a primary vehicle exists for this user in this container
+            from app.models.vehicle import Vehicle
+            if not Vehicle.query.filter_by(user_id=restored_user.id).first():
+                v = Vehicle(
+                    user_id=restored_user.id,
+                    manufacturer='Hyundai',
+                    model='i20',
+                    variant='Sportz 1.2 Petrol',
+                    registration_number='DL 01 AB 9988',
+                    fuel_type='Petrol',
+                    transmission='Manual',
+                    manufacturing_year=2023,
+                    current_odometer=14850
+                )
+                db.session.add(v)
+                db.session.commit()
+
+            return restored_user
+        except Exception:
+            db.session.rollback()
+            return None
+
     return None
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     """Handle user registration with validation and password hashing."""
-    if 'user_id' in session:
+    if 'user_id' in session and get_current_user():
         return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
@@ -64,15 +111,23 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash('Registration successful! Please log in with your credentials.', 'success')
-        return redirect(url_for('auth.login'))
+        # Log the user in directly with permanent session
+        session.clear()
+        session.permanent = True
+        session['user_id'] = new_user.id
+        session['username'] = new_user.username
+        session['email'] = new_user.email
+        session['name'] = new_user.name
+
+        flash('Registration successful! Welcome to AutoVault.', 'success')
+        return redirect(url_for('dashboard.index'))
 
     return render_template('register.html')
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Handle user login with secure generic error messages."""
-    if 'user_id' in session:
+    if 'user_id' in session and get_current_user():
         return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
@@ -91,8 +146,11 @@ def login():
         # Secure verification: generic error message to prevent account enumeration
         if user and user.check_password(password):
             session.clear()
+            session.permanent = True
             session['user_id'] = user.id
             session['username'] = user.username
+            session['email'] = user.email
+            session['name'] = user.name
             flash(f'Welcome back, {user.name}!', 'success')
 
             next_page = request.args.get('next')

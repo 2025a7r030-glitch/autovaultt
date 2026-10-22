@@ -6,7 +6,6 @@ Usage: python seed.py
 """
 
 from datetime import date, timedelta
-from app import create_app
 from app.models import db
 from app.models.user import User
 from app.models.vehicle import Vehicle
@@ -165,6 +164,7 @@ def seed_demo_data_in_context():
 
 def seed_demo_data():
     """Create app instance and populate demo data."""
+    from app import create_app
     app = create_app()
     with app.app_context():
         seed_demo_data_in_context()

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -37,6 +38,14 @@ def _get_upload_folder():
 class Config:
     """Application configuration for AutoVault."""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'autovault-dev-secret-key-3rd-sem-cybersec-2026'
+    
+    # Session Persistence & Cookie Configuration
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = False
+    
     IS_VERCEL = _is_serverless()
     SQLALCHEMY_DATABASE_URI = _get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
